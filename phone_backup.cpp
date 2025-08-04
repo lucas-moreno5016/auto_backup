@@ -4,6 +4,7 @@
 #include <fstream>
 #include <chrono>
 #include <thread>
+// #include <libmtp.h>
 
 namespace fs = std::filesystem;
 
@@ -88,7 +89,7 @@ int main() {
     // std::cout << src_path << " is file ? " << fs::is_directory(src_path) << std::endl;
 
     std::string input_file = "./input.txt";
-    fs::path backup_root = "./backup";
+    fs::path backup_root = "E:/phone_backup_test";
     std::vector<std::pair<fs::path, fs::path>> folders_to_sync = load_paths(input_file, backup_root);
 
     for (const auto& [src, dst] : folders_to_sync) {
