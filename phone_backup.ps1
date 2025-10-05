@@ -34,10 +34,20 @@ function Backup-Folder {
         Format-Directory $localDir
 
         if (-Not (Test-Path $localPath)) {
-            Write-Host "  Copying: $relativePath"
-            & $adb pull "`"$remoteFile`"" "`"$localPath`"" | Out-Null
+            # if file does not exist in back up, paste it there
+            Write-Host "    $relativePath not in backup. Adding to backup."  -ForegroundColor Green
+            & $adb pull "`"$remoteFile`"" "`"$localPath`"" *> $null
         } else {
-            Write-Host "  Skipped: $relativePath"
+            # if file exists in backup, compare hashes of remote and backup file.
+            # We compare the file hashes. If different, files are different (statistically garanted)
+            $remoteHash = (& $adb shell md5sum "`"$remoteFile`"" | ForEach-Object { ($_ -split ' ')[0].Trim() })
+            $localHash  = (Get-FileHash $localPath -Algorithm MD5).Hash.ToLower()
+            if (-Not ($remoteHash -eq $localHash)){
+                Write-Host "    $relativePath edited since last backup. Editing backup." -ForegroundColor DarkYellow
+                & $adb pull "`"$remoteFile`"" "`"$localPath`"" *> $null
+            } else {
+            Write-Host "     $relativePath already in backup. Skipped" -ForegroundColor DarkGray
+            }
         }
     }
 }
@@ -53,4 +63,4 @@ foreach ($pair in $backupMap.GetEnumerator()) {
     Backup-Folder $pair.Key $pair.Value
 }
 
-Write-Host "`n  Backup completed." -ForegroundColor Green
+Write-Host "`nBackup completed." -ForegroundColor Green
